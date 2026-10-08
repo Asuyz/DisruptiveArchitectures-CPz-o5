@@ -23,13 +23,14 @@
  */
 
 (function () {
-  const WORKER_URL = "https://disruptive-architectures-rag-worker.arnaldojr.workers.dev/ask";
+  const API_URL = window.DA_CHAT_API_URL || "http://127.0.0.1:8000/chat";
 
   // Estado que sobrevive à recriação do DOM entre navegações
   const estado = {
     aberto: false,
     mensagens: [], // { texto, who: 'user'|'bot', fontes? }
     enviando: false,
+    interactionId: null,
   };
 
   function montarWidget() {
@@ -94,8 +95,21 @@
         .da-rag-msg .bubble pre code {
           background: none; padding: 0; font-size: 12px; white-space: pre;
         }
-        .da-rag-sources { margin-top: 6px; font-size: 11.5px; opacity: 0.75; }
-        .da-rag-sources a { color: inherit; }
+        .da-rag-sources {
+          display: flex; flex-wrap: wrap; gap: 5px; margin-top: 8px;
+          font-size: 11.5px; opacity: 0.82;
+        }
+        .da-rag-source {
+          display: inline-flex; align-items: center; max-width: 100%;
+          padding: 3px 7px; border: 1px solid rgba(0,0,0,0.14);
+          border-radius: 999px; color: inherit; text-decoration: none;
+          overflow: hidden; vertical-align: middle;
+        }
+        .da-rag-source:hover { text-decoration: underline; }
+        .da-rag-source-label {
+          display: block; max-width: 190px; overflow: hidden;
+          text-overflow: ellipsis; white-space: nowrap;
+        }
         #da-rag-input-row { display: flex; border-top: 1px solid rgba(0,0,0,0.1); }
         #da-rag-input {
           flex: 1; border: none; padding: 10px; font-size: 13.5px; outline: none;
@@ -167,10 +181,13 @@
       const loadingId = addMessage("Consultando o material...", "bot", null, true);
 
       try {
-        const resp = await fetch(WORKER_URL, {
+        const resp = await fetch(API_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ pergunta }),
+          body: JSON.stringify({
+            mensagem: pergunta,
+            previous_interaction_id: estado.interactionId,
+          }),
         });
         if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
         const data = await resp.json();
@@ -180,6 +197,7 @@
         if (data.erro) {
           addMessage("Ops, deu um erro: " + data.erro, "bot");
         } else {
+          estado.interactionId = data.interaction_id || estado.interactionId;
           addMessage(data.resposta, "bot", data.fontes);
         }
       } catch (e) {
@@ -308,15 +326,20 @@
     if (m.fontes && m.fontes.length) {
       const src = document.createElement("div");
       src.className = "da-rag-sources";
-      src.appendChild(document.createTextNode("Fontes: "));
       m.fontes.forEach((f, index) => {
         const link = document.createElement("a");
-        link.href = f.url;
-        link.target = "_blank";
+        const url = typeof f === "string" ? f : f.url;
+        const titulo = typeof f === "string" ? "Abrir material" : f.titulo || "Abrir material";
+        link.className = "da-rag-source";
+        link.href = url;
+        link.target = "_self";
         link.rel = "noopener noreferrer";
-        link.textContent = f.titulo || f.url;
+        link.title = url;
+        const label = document.createElement("span");
+        label.className = "da-rag-source-label";
+        label.textContent = titulo;
+        link.appendChild(label);
         src.appendChild(link);
-        if (index < m.fontes.length - 1) src.appendChild(document.createTextNode(" · "));
       });
       wrap.appendChild(src);
     }
