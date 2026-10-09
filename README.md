@@ -115,7 +115,7 @@ A resposta deve conter os campos `resposta`, `interaction_id` e `fontes`.
 
 | Variável | Padrão | Para que serve |
 |---|---|---|
-| `RM` | `565592` | Sufixo usado nos nomes do ACR e do DNS |
+| `RM` | `-` | Sufixo usado nos nomes do ACR e do DNS |
 | `RG` | `rg-disruptive-api` | Nome do resource group |
 | `ACR_NAME` | `acrdisruptive${RM}` | Nome do ACR (único globalmente, só minúsculas e números) |
 | `DNS_LABEL` | `disruptive-api-rm${RM}` | Prefixo do endereço público do ACI |
