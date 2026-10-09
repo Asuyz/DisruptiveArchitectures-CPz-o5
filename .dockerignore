@@ -1,0 +1,7 @@
+# Ignora tudo e libera só o necessário para a API
+*
+!api/python/chatbot.py
+!api/python/rag.py
+!api/python/pyproject.toml
+!api/python/uv.lock
+!scripts/chunks_gemini_embedded.json
